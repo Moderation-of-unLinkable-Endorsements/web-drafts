@@ -1,2 +1,2 @@
 # web-spec
-The web specification draft for &lt;web API> backed by MoLE.
+The web specification draft for the web API backed by MoLE.
