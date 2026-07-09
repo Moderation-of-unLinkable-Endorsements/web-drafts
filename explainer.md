@@ -51,26 +51,31 @@ which is an attempt to solve the
 [PACT problem statement](https://github.com/antifraudcg/proposals/issues/22),
 from the W3C Anti-Fraud CG.
 
-When a user visits that is confident the user is genuine, that site may 
+When a user visits that is confident the user is genuine, that site may
 _endorse_ that user. Later, when the user visits a different site for the first
-time, the user may redeem their endorsement with a service that the site uses 
+time, the user may redeem their endorsement with a service that the site uses
 for access control, called a _moderator_. The user proves that they (1) were
-endorsed by one of a trusted set of sites and (2) is following a policy set 
+endorsed by one of a trusted set of sites and (2) is following a policy set
 between the moderator and site, like a rate limit.
 
 ### More practically, from where the user sits
 
-Suppose I'm a user browsing the web and I come to a website that is 
+Suppose I'm a user browsing the web and I come to a website that is
 uncertain whether my traffic is from a person using their website or a bot
-scraping content. Currently on the Web, one common approach is for the website
-to present me a CAPTCHA to either stop a web scraper or force them to burn
-CAPTCHA solving API credits. This wastes the time of the odd misclassified user,
-like myself, but doesn't prevent me from using the site. Other common approaches
-to deter bots are similarly painful for real people: additional friction or 
-outright blocks.
+scraping content. Even after invasive browser fingerprinting and IP reputation
+are considered, a site may not be certain. Currently on the Web, one common
+next step is for the website to make me or my computer do some work, in the
+hopes that this proves too expensive for abusive traffic at scale. This wastes
+the time and energy of the odd unclassified user. It gets worse if I'm
+misclassified as a bot; the site could block me entirely or degrade service
+to an agonizing pace.
 
-Instead, imagine if one of the sites I've already visited could endorse me as
-not being abusive to the site that might otherwise show me a CAPTCHA. Email
+All of this falls out of a site doing its best to sort out abusive traffic.
+This proposal suggests an additional signal sites could use to identify traffic
+that is more likely to be non-abusive.
+
+Imagine if one of the sites I've already visited could endorse me as
+not being abusive to the site that might otherwise issue a challenge. Email
 providers, paid VPN providers, or any site with an account system would have
 some degree of belief in my good behavior. Taking it a step further, imagine the
 site I'm visiting trusts a collection of different endorsements that cover
@@ -104,10 +109,10 @@ though the work there isn't done. It's
 are needed to communicate only the information we want with our messages and the
 [HTTP transport](https://datatracker.ietf.org/doc/draft-jms-mole-http-transport)
 gives us the language needed for us to send those messages between clients and
-servers. 
+servers.
 
-Even though it is early, there is enough structure there to make it worth 
-discussing the deployment-specific considerations that will have to be made if 
+Even though it is early, there is enough structure there to make it worth
+discussing the deployment-specific considerations that will have to be made if
 MoLE is to make its way into user agents.
 
 ## How does this work?
@@ -132,9 +137,9 @@ together.
 ### Anchor endorsement
 
 Taking actors from our example, Site A decides that our user is trustworthy.
-They can represent this by directing the user agent to claim an _endorsement_. 
+They can represent this by directing the user agent to claim an _endorsement_.
 The user agent performs an exchange with Site A's server and stores some state
-for this. See [below](#anchor-semantics)  for more detail on what semantics 
+for this. See [below](#anchor-semantics)  for more detail on what semantics
 this may carry.
 
 A website can endorse a client in a few different ways. Imperatively, this is
@@ -143,7 +148,7 @@ Declaratively, this is adding the tag `<link rel="endorsement"
 href="/endorsement_uri" > to a document's head.
 
 Either of these would cause a POST Fetch to the URL provided, following one
-of the 
+of the
 [endorsement protocols](https://www.ietf.org/archive/id/draft-jms-mole-protocols-00.html#name-endorsement-protocols).
 Any endorsement received in response is stored, keyed by the Origin of
 the top-level document.
@@ -151,10 +156,10 @@ the top-level document.
 ### Moderator use
 
 Now, some time later, our user is visiting Site F and as part of their normal
-actions trigger an anti-abuse check. Site F fetches some resources from 
-Service M, either as scripts or an iframe, and as part of their bot-or-not 
-confidence calculation, decides that anchor endorsement would be useful. Service 
-M declares a set of anchors that it trusts equally and asks the user agent to 
+actions trigger an anti-abuse check. Site F fetches some resources from
+Service M, either as scripts or an iframe, and as part of their bot-or-not
+confidence calculation, decides that anchor endorsement would be useful. Service
+M declares a set of anchors that it trusts equally and asks the user agent to
 provide a proof of endorsement from one of those anchors.
 
 Again, this could be done in a few ways. Imperatively, this would be a call to
@@ -170,11 +175,13 @@ Service M while providing a proof that you have an endorsement from one of the
 anchors it trusts. Critically, this doesn't reveal which anchor endorsed the
 user, just that one of them did.
 
-With a credential for the moderator in hand, the user agent presents its 
+With a credential for the moderator in hand, the user agent presents its
 credential by fetching the URL provided with a
 `Authorization: Mole presentation="<credential-presentation>"` request
-header. The validation result is returned to the caller and is used to update
-the credential state.
+header. The moderator can prove that the presentation is valid and determines
+how it wants to update the associated state of the credential. The user agent
+uses the response from the moderator to update the credential state and returns
+it to the caller.
 
 We could similarly cook up some sort of declarative version that encodes the
 arguments to `challenge` in the `<head>` of a document, while applying an
@@ -185,17 +192,17 @@ would be useful. We leave that for when the options are better defined.
 
 The architecture document defines the interaction between Moderators, Anchors,
 and Clients. We make the important distinction that in a Web deployment, the
-only component that makes up the Client is the user agent itself: not the 
-websites. The websites are part of the Moderator or Anchor, depending on the 
-method being invoked. For example, a call to `navigator.endorsement.challenge()` 
+only component that makes up the Client is the user agent itself: not the
+websites. The websites are part of the Moderator or Anchor, depending on the
+method being invoked. For example, a call to `navigator.endorsement.challenge()`
 is a `PresentationChallenge` issued by the site (Moderator) to the user agent
 (Client).
 
-This API may be extended to include a model where the Javascript execution
+This API may be extended to include a model where the JavaScript execution
 context is untrusted by the website to issue challenges or handle the
 presentation response. This would be as simple as determining _which_ Fetches
 process `WWW-Authenticate: Mole` response headers. This could be determined by
-the 
+the
 [Request's destination](https://developer.mozilla.org/en-US/docs/Web/API/Request/destination).
 
 TODO: diagram with Site
