@@ -133,7 +133,6 @@ together.
     They, like everyone, dislike CAPTCHAs and want their users to see fewer
     in their life.
 
-
 ### Anchor endorsement
 
 Taking actors from our example, Site A decides that our user is trustworthy.
@@ -155,7 +154,7 @@ the top-level document.
 
 ### Moderator use
 
-Now, some time later, our user is visiting Site F and as part of their normal
+Some time later, our user is visiting Site F and as part of their normal
 actions trigger an anti-abuse check. Site F fetches some resources from
 Service M, either as scripts or an iframe, and as part of their bot-or-not
 confidence calculation, decides that anchor endorsement would be useful. Service
@@ -163,50 +162,103 @@ M declares a set of anchors that it trusts equally and asks the user agent to
 provide a proof of endorsement from one of those anchors.
 
 Again, this could be done in a few ways. Imperatively, this would be a call to
-`navigator.endorsement.challenge("/moderator_uri", challengeOptions)`. What has
-to  be in `challengeOptions` is a bit up in the air at the moment, but it is
-important to note that it is entirely obtainable within the context of Site F.
-So far it contains information about the moderator's policies and the session,
-time, or request that this use is bound to.
+`navigator.endorsement.challenge("/challenge_uri")`, which causes a Fetch to
+`/challenge_uri` that will be responsive to a `WWW-Authenticate: Mole`
+challenge. Declaratively, this is adding the tag `<link rel="challenge"
+href="/challenge_uri">`.
 
-If the user agent hasn't already used that moderator, it will have to get a
-credential from it at this point. This is done through some Fetching from
+To successfully handle the `WWW-Authenticate: Mole` challenge, the user agent
+will need a credential from Service M. These credentials are stored keyed by the
+Origin that Service M uses to host its Moderator service, so it can be reused
+across sites.
+
+If the user agent hasn't already used Service M, it will have to get a
+credential from it at this point. This is done through some request to
 Service M while providing a proof that you have an endorsement from one of the
 anchors it trusts. Critically, this doesn't reveal which anchor endorsed the
 user, just that one of them did.
 
-With a credential for the moderator in hand, the user agent presents its
-credential by fetching the URL provided with a
+With a credential from Service M in hand, the user agent presents its
+credential by re-fetching the URL provided with a
 `Authorization: Mole presentation="<credential-presentation>"` request
-header, or whatever is finalized in the [transport definition](https://datatracker.ietf.org/doc/draft-jms-mole-http-transport/). 
+header, or whatever is finalized in the [transport definition](https://datatracker.ietf.org/doc/draft-jms-mole-http-transport/).
 The moderator can prove that the presentation is valid and determines
 how it wants to update the associated state of the credential. The user agent
 uses the response from the moderator to update the credential state and returns
 it to the caller.
 
-We could similarly cook up some sort of declarative version that encodes the
-arguments to `challenge` in the `<head>` of a document, while applying an
-attribute to elements that may issue a request for which a Moderated Endorsement
-would be useful. We leave that for when the options are better defined.
+A successful authorization can be associated with a cookie present in the same
+exchange to create a persistent indication that the current user agent is the
+same one that previously authenticated.
+
+### Moderator use, per resource
+
+The previous section allows the Mole authentication scheme to be processed on
+very few requests. One simple expansion is to allow this processing on the
+specific requests that are for expensive resources.
+
+This can be done for scripts
+by adding an additional instance property to
+[RequestInit](https://fetch.spec.whatwg.org/#requestinit) that flags the
+requests' participation: `moderated`, so that the following call would
+participate in the MoLE authentication scheme: `fetch("/expensive",
+{moderated: true})`.
+
+Similarly, a `modereated` attribute could be applied to media elements, form
+elements, frame elements, or even link elements to empower their fetches.
+
 
 ### Mapping the architecture onto the Web
 
-The architecture document defines the interaction between Moderators, Anchors,
-and Clients. We make the important distinction that in a Web deployment, the
-only component that makes up the Client is the user agent itself: not the
-websites. The websites are part of the Moderator or Anchor, depending on the
-method being invoked. For example, a call to `navigator.endorsement.challenge()`
-is a `PresentationChallenge` issued by the site (Moderator) to the user agent
-(Client).
+The [MoLE Architecture](https://datatracker.ietf.org/doc//draft-jms-mole-architecture),
+defines interactions between Moderators,  Anchors, and Clients. We make the
+important distinction that in a Web deployment, the only component that makes
+up the Client is the user agent itself: not the websites. The user agent
+controls the flow of information out of the user's credential store. Site F is
+part of the Moderator.
 
-This API may be extended to include a model where the JavaScript execution
-context is untrusted by the website to issue challenges or handle the
-presentation response. This would be as simple as determining _which_ Fetches
-process `WWW-Authenticate: Mole` response headers. This could be determined by
-the
-[Request's destination](https://developer.mozilla.org/en-US/docs/Web/API/Request/destination).
+Even though Sites is composed of a server-side
+and client-side component, both are isolated from the information of the
+user agent's credential store. The client-side component of Site A needs to be
+viewed with caution: because it is executing within the sandbox of the
+user agent, its actions should not be trusted more than the Client's by Site A's
+server-side.
 
-TODO: diagram with Site
+Another important distinction arises between the Moderator's subcomponents:
+only the Moderator's own servers are able to validate a presentation from the
+Client (assuming the
+[ACT credential protocol](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/draft-jms-mole-protocols.html#name-anonymous-credit-tokens-act).
+This combines with the untrusted nature of the Site's client-side
+component to impose a requirement: the presentation response from the Moderator
+must be handled directly by the server-side component of the Site.
+
+This makes the presentation flow look a bit more complicated than the
+architecture document lets on:
+
+```mermaid
+sequenceDiagram
+    box Client
+    participant U as User Agent
+    end
+    box Moderator
+    participant CS as Site (client-side)
+    participant SS as Site (server-side)
+    participant M as Moderator Service
+    end
+
+    CS->>U: Invoke a participating Fetch
+    U->>SS: GET /foo
+    SS->>U: 401, WWW-Authenticate: Mole <challenge>
+    U->>SS: GET /foo, Authorization: Mole <presentation>
+    SS->>M: GET /presentation, Authorization: Mole <presentation>
+    M->>SS: 200, Mole-Credential: update="<optional-credential-update>"
+    SS->>U: 200, Mole-Credential: update="<optional-credential-update>", Set-Cookie: <token>
+    U->>U: Update credential
+    U->>CS: Response(200)
+```
+
+The request flows from web content, through the browser, to the site's own
+servers, on to a specialized moderator service's servers, and back.
 
 ### Constraints
 
