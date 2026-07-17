@@ -212,56 +212,140 @@ TODO: diagram with Site
 
 Now, the hard part: constraining the system to meet our non-goal requirements.
 
-TODO: fill the bullets below
-
 #### What the cryptography gives us
 
-- unlinkable presentation
-- blind anchor proof
+Fortunately, MoLE builds on cryptography that gives us useful privacy
+properties to build on.
+
+First, presentations of a credential are unlinkable to their past updates. For
+our deployment, this means that if the only information crossing a boundary is
+a presentation from the user agent, then the moderator does not learn where
+that credential has been used before.
+
+Second, when a client provides a proof of an anchor's endorsement to a
+moderator, the moderator does not learn which anchor endorsed the client. It
+only learns that one of the anchors in the set it advertised to the client
+did.
 
 #### Moderator restrictions
 
-- one per site
-- API to fetch the current state
+Each Site should be restricted to a single moderator. This prevents a site
+from using the states of several credentials as a cross-site tracking signal,
+even when those credentials are based in the same anchor set. A Site can
+change moderators by clearing its storage.
 
 #### Anchor set policies
 
-- minimal coverage of users
-- coverage must still be good if one anchor is removed
-- 2 policies per-user per-X-months
+Each moderator picks which anchors it roots a client's reputation in. The
+composition of this set is critical to the privacy and centralization
+properties of the system. A few user-agent-enforced rules help guide it to an
+acceptable state. The numbers below are reasonable starting points and would
+require careful consideration.
+
+First, at least 50% of user agents must hold endorsements from more than one
+anchor in the set. This ensures that the system does not rely on a single
+anchor, and that holding an endorsement from the set does not reliably reveal
+an endorsement from any particular anchor.
+
+Second, a moderator must present each client with at most 2 different anchor
+sets within any 6-month period. This allows iteration and experimentation
+without rapidly accruing information about each user's endorsements.
 
 #### Randomly injected failure
 
-- site-anchor pairs get x% chance of failure.
+This system should not be relied upon as the sole signal of user quality.
+Moreover, users who lack endorsements from an extremely popular anchor should
+not be easy to identify. To those ends, user agents should withhold an
+anchor's endorsement from a site with a small probability, e.g. 5%. Together
+with the anchor set policies, this lets us compute differential privacy
+guarantees for the information a site gains about a user's endorsement or
+non-endorsement by any given anchor.
 
 #### Anchor semantics
 
-- probably just "non-abusive account"
-- could also be "seen this before"
-- we can't control it!
-- If you are using device attestation, we pull the plug
+The semantics assigned to an anchor's endorsement are beyond the control of
+this API's design. We expect them to converge on something like "non-abusive
+account," but that is purely a prediction. However, any use of an endorsement
+that is gated behind device attestation must be treated as abusive, and the
+corresponding anchor must be blocked by user agents. Without this collective
+action, this API could become a vector for significantly reducing the friction
+to device attestation across the Web, in direct violation of the non-goals
+above.
 
 #### Partitioning, or the lack thereof
 
-- no partitioning!
+A key piece of Moderated Endorsements is that credential and endorsement state
+is not partitioned by top-level site. This is what lets the constrained signal
+we have constructed flow between sites, and is precisely the point of the
+design: to provide just enough information between sites that they do not
+resort to more invasive and persistent mechanisms.
 
-#### Feedback about Anchors
+A side effect is that when a moderator is shared by multiple sites, all of
+those sites must follow the policy established by that moderator for the
+system to work. A moderator must therefore exercise control over which sites
+use it and how.
 
-- Experimentation across users or across the 2 policies permitted
-- Alternatively, something like PRIO
+#### Feedback about anchors
+
+When picking an anchor set, a moderator faces a tough choice. It may
+understand each anchor's advertised semantics, but be unable to compare their
+efficacy at determining whether traffic is trustworthy. Because anchors are
+indistinguishable to the moderator at time of use, the moderator's confidence
+in its anchor set is bounded by the set's weakest link. It is therefore
+important for a moderator to gain insight into which anchors were used at the
+issuance of the most misbehaving credentials.
+
+There are two possible paths forward. The first is to exploit the flexibility
+already allowed in the anchor set: by rotating between different sets as an
+experiment, the moderator can determine which anchors' endorsements correlate
+with the most abuse. It can either use the 2-sets-per-client-per-6-months
+allowance above, or segment users into experiment groups. Alternatively, the
+MoLE architecture draft mentions integrating a privacy-preserving measurement
+technique.
+
+#### Navigational tracking
+
+Many of the restrictions above are about constraining what a single site can
+learn about a user agent. Sites often work together to aggregate information
+about a user, particularly as the user navigates between sites. As presented
+so far, a single site could bounce a user through several pages on different
+sites, gather each moderator's signal, append it to the URL at each hop, and
+finally deliver the user to their intended destination.
+
+To prevent this, we suggest that the user agent gate access to the API on
+something like user activation, but one that carries across page
+navigations. This has its own problems and is tracked in
+[an open issue](https://github.com/Moderation-of-unLinkable-Endorsements/web-drafts/issues/1).
 
 #### Embedded content, workers, and miscellania
 
-- Permission-policy default self. Affects the top-level directly
-- no workers
-- user-interaction-esque to mitigate navigation-tracking (Issue #1)
+Moderated Endorsements share a finite resource at the top window's Site: the
+choice of moderator. To prevent frames from making that choice on behalf of
+the rest of the site without permission, Moderated Endorsements should be a
+policy-controlled feature with a default of `self`.
+
+Similarly, because the feature is tied to a top-level window, it seems safest
+to expose the JavaScript API in windows only.
+
+Not-fully-active windows, windows whose top-level has an opaque origin,
+insecure contexts, and the other usual caveats should all apply, disabling
+Moderated Endorsements in those cases.
 
 ## Alternatives Considered
 
+TODO: Flesh this out
+
+- PAT
 - PVT
 - PST
+- Enable the Authentication mechanism on all fetches
+- Direct Client-Moderator communication, requiring a Site-verifiable Moderator validation record
+- More detail in the web API call to cut out the first round trip to the Site
+
 
 ## Accessibility, Internationalization, Privacy, and Security Considerations
+
+TODO: Flesh this out
 
 - The whole thing is kind of a privacy discussion.
 - No web-security, a11y, i18n considerations
@@ -269,9 +353,13 @@ TODO: fill the bullets below
 
 ## Stakeholder Feedback
 
+TODO: Issue template here
+
 - link to file issue for feedback, support, or disapproval
 
 ## References & Acknowledgments
+
+TODO: Fill this in
 
 - TK, many
 
