@@ -281,10 +281,24 @@ did.
 
 #### Moderator restrictions
 
-Each Site should be restricted to a single moderator. This prevents a site
-from using the states of several credentials as a cross-site tracking signal,
-even when those credentials are based in the same anchor set. A Site can
-change moderators by clearing its storage.
+Each Site should be restricted to some small number of moderators.
+This prevents a site from using the states of several credentials as a
+high-entropy cross-site tracking signal. This allows Sites to test
+compare the effectiveness of multiple moderators. If a clean break is
+necessary, for instance if a moderator discontinues service, the Site may
+reset its storage using the `Clear-Site-Data` header in order to use a
+different moderator.
+
+This restriction is necessary even if multiple moderators use the same set of
+anchors; if one of the moderators is only used on one other site, the
+presence of a credential from that moderator would let the site operator
+know that the user has visited that other site. With a sufficient number of
+moderators, a malicious network of colluding sites could identify a user.
+
+This limitation may be handled differently by distinct user agents, or as
+a user preference, with the caveat that it may lead to the user being
+presented with more CAPTCHA or similar challenges on sites which expect more
+moderator signals to be available.
 
 #### Anchor set policies
 
