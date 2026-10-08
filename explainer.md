@@ -3,6 +3,7 @@
 ## Authors:
 
 - Benjamin VanderSloot (Mozilla)
+- Erica Kovac (Google)
 
 ## Participate
 - [Issue tracker](https://github.com/Moderation-of-unLinkable-Endorsements/web-drafts/issues)
@@ -170,10 +171,12 @@ M declares a set of anchors that it trusts equally and asks the user agent to
 provide a proof of endorsement from one of those anchors.
 
 Again, this could be done in a few ways. This may occur on the initial navigation,
-where the Moderator sends a `WWW-Authenticate: Mole challenge="<...>", realm="moderator"` along with the response.
-In this case, if it's OK to handle the request asynchronously, the Moderator may return a `200` status along with the
-content the client was expecting for that URL. In this case, the rest of the exchange happens asynchronously.
-If a `401` is received, the exchange proceeds synchronously, blocking the navigation until it completes.
+where the Moderator sends a `WWW-Authenticate: Mole challenge="<...>", realm="moderator"`
+along with the response. In this case, if it's OK to handle the request
+asynchronously, the Moderator may return a `200` status along with the
+content the client was expecting for that URL. In this case, the rest of
+the exchange happens asynchronously. If a `401` is received, the exchange proceeds
+synchronously, blocking the navigation until it completes.
 
 To successfully handle the `WWW-Authenticate: Mole` challenge, the user agent
 will need a credential from Service M. These credentials are stored keyed by the
@@ -193,12 +196,12 @@ header, or whatever is finalized in the [transport definition](https://datatrack
 The moderator can prove that the presentation is valid and determines
 how it wants to update the associated state of the credential. If the Moderator
 wishes to withhold the credential for some time to observe the behavior of the client
-before delivering a verdict, providing a URI with which to call back with
-when the client wants the credential refunded. This may happen when the user agent
-navigates away from all pages handled by by the Moderator, before the user agent restarts,
-or just after some time-out, potentially with a hint for a minimum poll interval in the server's
-deferred-update response.
-
+before delivering a verdict, it can return a deferred update providing a URI with which to call back with
+the presentation session handle when the client wants the credential refunded. 
+This may happen when the user agent navigates away from all pages handled by
+the Moderator, before the user agent restarts, or just after some time-out, 
+potentially with a hint for a minimum poll interval in the 
+server's deferred-update response or as part of the registered configuration.
 
 The user agent uses the response from the moderator to update the credential state
 and stores it, replacing the existing credential's value 
