@@ -3,6 +3,7 @@
 ## Authors:
 
 - Benjamin VanderSloot (Mozilla)
+- Erica Kovac (Google)
 
 ## Participate
 - [Issue tracker](https://github.com/Moderation-of-unLinkable-Endorsements/web-drafts/issues)
@@ -141,16 +142,24 @@ The user agent performs an exchange with Site A's server and stores some state
 for this. See [below](#anchor-semantics)  for more detail on what semantics
 this may carry.
 
-A website can endorse a client in a few different ways. Imperatively, this is
-a call to `navigator.endorsement.collect("/endorsement_uri")`.
-Declaratively, this is adding the tag `<link rel="endorsement"
-href="/endorsement_uri" >` to a document's head.
+When a user agent sends a credentialed request in the toplevel context to
+an origin shared with an Anchor, it checks its store of endorsements.
+If it does not already have an endorsement for the Anchor, it attaches a 
+header `Authorization: Mole exhausted, realm="anchor"` to the outbound request.
 
-Either of these would cause a POST Fetch to the URL provided, following one
-of the
-[endorsement protocols](https://www.ietf.org/archive/id/draft-jms-mole-protocols-00.html#name-endorsement-protocols).
+If the Anchor is willing to grant the user agent a new endorsement and observes this header,
+it begins the the endorsement flow by responding to this request with a
+`WWW-Authenticate: Mole challenge="...", realm="anchor"` header, consistent with
+[MOLE HTTP Transport Section-6.1](https://www.ietf.org/archive/id/draft-jms-mole-http-transport-00.html#section-6.1).
+
+After the navigation is committed, it asynchronously executes the exchange protocol
+outlined above, separately from any subsequent client-side navigation or fetches, in a series of POST requests.
 Any endorsement received in response is stored, keyed by the Origin of
-the top-level document.
+the Anchor that triggered the request.
+
+If during that process the Anchor determines that the user agent has exceeded
+its endorsement quota for the epoch, it may either omit the challenge header above in the initial request, or
+return a 429 error code in response.
 
 ### Moderator use
 
@@ -161,11 +170,13 @@ confidence calculation, decides that anchor endorsement would be useful. Service
 M declares a set of anchors that it trusts equally and asks the user agent to
 provide a proof of endorsement from one of those anchors.
 
-Again, this could be done in a few ways. Imperatively, this would be a call to
-`navigator.endorsement.challenge("/challenge_uri")`, which causes a Fetch to
-`/challenge_uri` that will be responsive to a `WWW-Authenticate: Mole`
-challenge. Declaratively, this is adding the tag `<link rel="challenge"
-href="/challenge_uri">`.
+Again, this could be done in a few ways. This may occur on the initial navigation,
+where the Moderator sends a `WWW-Authenticate: Mole challenge="<...>", realm="moderator"`
+along with the response. In this case, if it's OK to handle the request
+asynchronously, the Moderator may return a `200` status along with the
+content the client was expecting for that URL. In this case, the rest of
+the exchange happens asynchronously. If a `401` is received, the exchange proceeds
+synchronously, blocking the navigation until it completes.
 
 To successfully handle the `WWW-Authenticate: Mole` challenge, the user agent
 will need a credential from Service M. These credentials are stored keyed by the
@@ -183,9 +194,17 @@ credential by re-fetching the URL provided with a
 `Authorization: Mole presentation="<credential-presentation>"` request
 header, or whatever is finalized in the [transport definition](https://datatracker.ietf.org/doc/draft-jms-mole-http-transport/).
 The moderator can prove that the presentation is valid and determines
-how it wants to update the associated state of the credential. The user agent
-uses the response from the moderator to update the credential state and returns
-it to the caller.
+how it wants to update the associated state of the credential. If the Moderator
+wishes to withhold the credential for some time to observe the behavior of the client
+before delivering a verdict, it can return a deferred update providing a URI with which to call back with
+the presentation session handle when the client wants the credential refunded. 
+This may happen when the user agent navigates away from all pages handled by
+the Moderator, before the user agent restarts, or just after some time-out, 
+potentially with a hint for a minimum poll interval in the 
+server's deferred-update response or as part of the registered configuration.
+
+The user agent uses the response from the moderator to update the credential state
+and stores it, replacing the existing credential's value 
 
 A successful authorization can be associated with a cookie present in the same
 exchange to create a persistent indication that the current user agent is the
@@ -204,7 +223,7 @@ requests' participation: `moderated`, so that the following call would
 participate in the MoLE authentication scheme: `fetch("/expensive",
 {moderated: true})`.
 
-Similarly, a `modereated` attribute could be applied to media elements, form
+Similarly, a `moderated` attribute could be applied to media elements, form
 elements, frame elements, or even link elements to empower their fetches.
 
 
