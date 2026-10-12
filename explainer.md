@@ -104,11 +104,11 @@ The aim of this work is to **not**:
 ### MoLE Dependency
 
 This approach builds on the
-[MoLE Architecture](https://datatracker.ietf.org/doc//draft-jms-mole-architecture),
+[MoLE Architecture](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/draft-jms-mole-architecture.html),
 though the work there isn't yet final. Its
-[new protocols](https://datatracker.ietf.org/doc/draft-jms-mole-protocols)
+[new protocols](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/draft-jms-mole-protocols.html)
 are needed to communicate only the information we want with our messages and the
-[HTTP transport](https://datatracker.ietf.org/doc/draft-jms-mole-http-transport)
+[HTTP transport](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/draft-jms-mole-http-transport.html)
 gives us the language needed for us to send those messages between clients and
 servers.
 
@@ -149,8 +149,8 @@ header `Authorization: Mole exhausted, realm="anchor"` to the outbound request.
 
 If the Anchor is willing to grant the user agent a new endorsement and observes this header,
 it begins the the endorsement flow by responding to this request with a
-`WWW-Authenticate: Mole challenge="...", realm="anchor"` header, consistent with
-[MOLE HTTP Transport Section-6.1](https://www.ietf.org/archive/id/draft-jms-mole-http-transport-00.html#section-6.1).
+`WWW-Authenticate: Mole endorse="...", realm="anchor"` header, consistent with
+[MOLE HTTP Transport Section-6.1](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/draft-jms-mole-http-transport.html#section-6.1).
 
 After the navigation is committed, it asynchronously executes the exchange protocol
 outlined above, separately from any subsequent client-side navigation or fetches, in a series of POST requests.
@@ -192,7 +192,7 @@ user, just that one of them did.
 With a credential from Service M in hand, the user agent presents its
 credential by re-fetching the URL provided with a
 `Authorization: Mole presentation="<credential-presentation>"` request
-header, or whatever is finalized in the [transport definition](https://datatracker.ietf.org/doc/draft-jms-mole-http-transport/).
+header, or whatever is finalized in the [transport definition.](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/draft-jms-mole-http-transport.html).
 The moderator can prove that the presentation is valid and determines
 how it wants to update the associated state of the credential. If the Moderator
 wishes to withhold the credential for some time to observe the behavior of the client
@@ -229,7 +229,7 @@ elements, frame elements, or even link elements to empower their fetches.
 
 ### Mapping the architecture onto the Web
 
-The [MoLE Architecture](https://datatracker.ietf.org/doc//draft-jms-mole-architecture),
+The [MoLE Architecture](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/draft-jms-mole-architecture.html),
 defines interactions between Moderators,  Anchors, and Clients. We make the
 important distinction that in a Web deployment, the only component that makes
 up the Client is the user agent itself: not the websites. The user agent
