@@ -144,8 +144,8 @@ this may carry.
 
 When a user agent sends a credentialed request in the toplevel context to
 an origin shared with an Anchor, it checks its store of endorsements.
-If it does not already have an endorsement for the Anchor, it attaches a 
-header `Authorization: Mole exhausted, realm="anchor"` to the outbound request.
+If it does not already have an endorsement for the Anchor, it attaches the 
+header `Want-Endorsement: Mole` to the outbound request.
 
 If the Anchor is willing to grant the user agent a new endorsement and observes this header,
 it begins the the endorsement flow by responding to this request with a
