@@ -8,7 +8,7 @@ Repository: Moderation-of-unLinkable-Endorsements/web-draft
 Editor: Samuel Schlesinger, , sgschlesinger@gmail.com
 Abstract:
     This document specifies a web API exposing the
-    Moderation of unLinkable Endorsements (MoLE) architecture to web
+    Moderation of unLinkable Endorsements (MOLE) architecture to web
     applications. It is at an early, exploratory stage of development.
 Markup Shorthands: markdown yes
 </pre>
@@ -17,10 +17,10 @@ Introduction {#intro}
 =====================
 
 Issue: This document is an early draft. The shape of the API is still
-being explored alongside the underlying [MoLE architecture
+being explored alongside the underlying [MOLE architecture
 draft](https://github.com/Moderation-of-unLinkable-Endorsements/architecture-draft).
 
-The Moderation of unLinkable Endorsements (MoLE) architecture allows a
+The Moderation of unLinkable Endorsements (MOLE) architecture allows a
 user to carry trust signals across origins without becoming linkable
 across those origins. This document describes the web-platform surface
 through which web applications interact with that architecture.
