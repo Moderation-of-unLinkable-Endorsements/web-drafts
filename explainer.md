@@ -1,11 +1,12 @@
 # Moderated Endorsements
 
-## Authors:
+## Authors
 
 - Benjamin VanderSloot (Mozilla)
 - Erica Kovac (Google)
 
 ## Participate
+
 - [Issue tracker](https://github.com/Moderation-of-unLinkable-Endorsements/web-drafts/issues)
 
 ## Table of Contents
@@ -16,19 +17,21 @@
 - [Introduction](#introduction)
   - [More practically, from where the user sits](#more-practically-from-where-the-user-sits)
   - [Non-goals](#non-goals)
-  - [The Incomplete MOLE Dependency](#the-incomplete-mole-dependency)
+  - [MOLE Dependency](#mole-dependency)
 - [How does this work?](#how-does-this-work)
   - [Anchor endorsement](#anchor-endorsement)
   - [Moderator use](#moderator-use)
-  - [Mapping the architecture onto the web](#mapping-the-architecture-onto-the-web)
+  - [Moderator use, per resource](#moderator-use-per-resource)
+  - [Mapping the architecture onto the Web](#mapping-the-architecture-onto-the-web)
   - [Constraints](#constraints)
     - [What the cryptography gives us](#what-the-cryptography-gives-us)
     - [Moderator restrictions](#moderator-restrictions)
     - [Anchor set policies](#anchor-set-policies)
-    - [Random failure](#random-failure)
+    - [Randomly injected failure](#randomly-injected-failure)
     - [Anchor semantics](#anchor-semantics)
     - [Partitioning, or the lack thereof](#partitioning-or-the-lack-thereof)
-    - [Feedback](#feedback)
+    - [Feedback about anchors](#feedback-about-anchors)
+    - [Navigational tracking](#navigational-tracking)
     - [Embedded content, workers, and miscellania](#embedded-content-workers-and-miscellania)
 - [Alternatives Considered](#alternatives-considered)
 - [Accessibility, Internationalization, Privacy, and Security Considerations](#accessibility-internationalization-privacy-and-security-considerations)
@@ -40,10 +43,10 @@
 ## Introduction
 
 Websites have few options at hand to limit abusive or high-volume traffic and
-none of them are very good. Tracking users across the web based on apparent fingerprint is
-a violation of their privacy. CAPTCHAs introduce a friction to many visitors
-to a site, particularly to users that use privacy-enhancing user agents. Client
-integrity checks close off the Web to many users.
+none of them are very good. Tracking users across the web based on apparent
+fingerprint is a violation of their privacy. CAPTCHAs introduce a friction to
+many visitors to a site, particularly to users that use privacy-enhancing user
+agents. Client integrity checks close off the Web to many users.
 
 This work proposes a new option: Moderated Endorsements. This proposal is the
 user agent deployment of emerging work at the IETF,
@@ -95,7 +98,8 @@ worse.
 
 The aim of this work is to **not**:
 
-- Create a load-bearing requirement to have an account at a website to browse the Web
+- Create a load-bearing requirement to have an account at a website to browse
+  the Web
 - Allow any new exchange of information from the OS to the website
 - Incentivize more centralization than already exists in anti-abuse providers
 - Create a new vector for cross-site tracking
@@ -118,9 +122,9 @@ MOLE is to make its way into user agents.
 
 ## How does this work?
 
-The benefit of Moderated Endorsements is that it allows us to share information across
-sites. To explore it fully, we therefore have to imagine a few sites willing to work
-together.
+The benefit of Moderated Endorsements is that it allows us to share information
+across sites. To explore it fully, we therefore have to imagine a few sites
+willing to work together.
 
 - Site F, where a user is visiting for the first time and wants to take some
     more expensive action, like posting a comment or searching a database
@@ -144,22 +148,24 @@ this may carry.
 
 When a user agent sends a credentialed request in the toplevel context to
 an origin shared with an Anchor, it checks its store of endorsements.
-If it does not already have an endorsement for the Anchor, it attaches the 
+If it does not already have an endorsement for the Anchor, it attaches the
 header `Want-Endorsement: Mole` to the outbound request.
 
-If the Anchor is willing to grant the user agent a new endorsement and observes this header,
-it begins the the endorsement flow by responding to this request with a
+If the Anchor is willing to grant the user agent a new endorsement and observes
+this header, it begins the the endorsement flow by responding to this request
+with a
 `WWW-Authenticate: Mole endorse="...", realm="anchor"` header, consistent with
 [MOLE HTTP Transport Section-6.1](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/draft-jms-mole-http-transport.html#section-6.1).
 
-After the navigation is committed, it asynchronously executes the exchange protocol
-outlined above, separately from any subsequent client-side navigation or fetches, in a series of POST requests.
+After the navigation is committed, it asynchronously executes the exchange
+protocol outlined above, separately from any subsequent client-side navigation
+or fetches, in a series of POST requests.
 Any endorsement received in response is stored, keyed by the Origin of
 the Anchor that triggered the request.
 
 If during that process the Anchor determines that the user agent has exceeded
-its endorsement quota for the epoch, it may either omit the challenge header above in the initial request, or
-return a 429 error code in response.
+its endorsement quota for the epoch, it may either omit the challenge header
+above in the initial request, or return a 429 error code in response.
 
 ### Moderator use
 
@@ -195,16 +201,17 @@ credential by re-fetching the URL provided with a
 header, or whatever is finalized in the [transport definition.](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/draft-jms-mole-http-transport.html).
 The moderator can prove that the presentation is valid and determines
 how it wants to update the associated state of the credential. If the Moderator
-wishes to withhold the credential for some time to observe the behavior of the client
-before delivering a verdict, it can return a deferred update providing a URI with which to call back with
-the presentation session handle when the client wants the credential refunded. 
+wishes to withhold the credential for some time to observe the behavior of the
+client before delivering a verdict, it can return a deferred update providing a
+URI with which to call back with the presentation session handle when the
+client wants the credential refunded.
 This may happen when the user agent navigates away from all pages handled by
-the Moderator, before the user agent restarts, or just after some time-out, 
-potentially with a hint for a minimum poll interval in the 
+the Moderator, before the user agent restarts, or just after some time-out,
+potentially with a hint for a minimum poll interval in the
 server's deferred-update response or as part of the registered configuration.
 
 The user agent uses the response from the moderator to update the credential state
-and stores it, replacing the existing credential's value 
+and stores it, replacing the existing credential's value
 
 A successful authorization can be associated with a cookie present in the same
 exchange to create a persistent indication that the current user agent is the
@@ -225,7 +232,6 @@ participate in the MOLE authentication scheme: `fetch("/expensive",
 
 Similarly, a `moderated` attribute could be applied to media elements, form
 elements, frame elements, or even link elements to empower their fetches.
-
 
 ### Mapping the architecture onto the Web
 
@@ -424,9 +430,9 @@ TODO: Flesh this out
 - PVT
 - PST
 - Enable the Authentication mechanism on all fetches
-- Direct Client-Moderator communication, requiring a Site-verifiable Moderator validation record
+- Direct Client-Moderator communication, requiring a Site-verifiable Moderator
+  validation record
 - More detail in the web API call to cut out the first round trip to the Site
-
 
 ## Accessibility, Internationalization, Privacy, and Security Considerations
 
@@ -447,4 +453,3 @@ TODO: Issue template here
 TODO: Fill this in
 
 - TK, many
-
