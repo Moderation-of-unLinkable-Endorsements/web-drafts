@@ -17,7 +17,7 @@
 - [Introduction](#introduction)
   - [More practically, from where the user sits](#more-practically-from-where-the-user-sits)
   - [Non-goals](#non-goals)
-  - [MoLE Dependency](#mole-dependency)
+  - [MOLE Dependency](#mole-dependency)
 - [How does this work?](#how-does-this-work)
   - [Anchor endorsement](#anchor-endorsement)
   - [Moderator use](#moderator-use)
@@ -50,7 +50,7 @@ agents. Client integrity checks close off the Web to many users.
 
 This work proposes a new option: Moderated Endorsements. This proposal is the
 user agent deployment of emerging work at the IETF,
-[MoLE](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/),
+[MOLE](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/),
 which is an attempt to solve the
 [PACT problem statement](https://github.com/antifraudcg/proposals/issues/22),
 from the W3C Anti-Fraud CG.
@@ -104,10 +104,10 @@ The aim of this work is to **not**:
 - Incentivize more centralization than already exists in anti-abuse providers
 - Create a new vector for cross-site tracking
 
-### MoLE Dependency
+### MOLE Dependency
 
 This approach builds on the
-[MoLE Architecture](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/draft-jms-mole-architecture.html),
+[MOLE Architecture](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/draft-jms-mole-architecture.html),
 though the work there isn't yet final. Its
 [new protocols](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/draft-jms-mole-protocols.html)
 are needed to communicate only the information we want with our messages and the
@@ -117,7 +117,7 @@ servers.
 
 Even though it is early, there is enough structure there to make it worth
 discussing the deployment-specific considerations that will have to be made if
-MoLE is to make its way into user agents.
+MOLE is to make its way into user agents.
 
 ## How does this work?
 
@@ -226,7 +226,7 @@ This can be done for scripts
 by adding an additional instance property to
 [RequestInit](https://fetch.spec.whatwg.org/#requestinit) that flags the
 requests' participation: `moderated`, so that the following call would
-participate in the MoLE authentication scheme: `fetch("/expensive",
+participate in the MOLE authentication scheme: `fetch("/expensive",
 {moderated: true})`.
 
 Similarly, a `moderated` attribute could be applied to media elements, form
@@ -234,7 +234,7 @@ elements, frame elements, or even link elements to empower their fetches.
 
 ### Mapping the architecture onto the Web
 
-The [MoLE Architecture](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/draft-jms-mole-architecture.html),
+The [MOLE Architecture](https://moderation-of-unlinkable-endorsements.github.io/internet-drafts/draft-jms-mole-architecture.html),
 defines interactions between Moderators,  Anchors, and Clients. We make the
 important distinction that in a Web deployment, the only component that makes
 up the Client is the user agent itself: not the websites. The user agent
@@ -290,7 +290,7 @@ Now, the hard part: constraining the system to meet our non-goal requirements.
 
 #### What the cryptography gives us
 
-Fortunately, MoLE builds on cryptography that gives us useful privacy
+Fortunately, MOLE builds on cryptography that gives us useful privacy
 properties to build on.
 
 First, presentations of a credential are unlinkable to their past updates. For
@@ -390,7 +390,7 @@ already allowed in the anchor set: by rotating between different sets as an
 experiment, the moderator can determine which anchors' endorsements correlate
 with the most abuse. It can either use the 2-sets-per-client-per-6-months
 allowance above, or segment users into experiment groups. Alternatively, the
-MoLE architecture draft mentions integrating a privacy-preserving measurement
+MOLE architecture draft mentions integrating a privacy-preserving measurement
 technique.
 
 #### Navigational tracking
