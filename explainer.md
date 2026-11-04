@@ -104,7 +104,6 @@ The aim of this work is to **not**:
 - Incentivize more centralization than already exists in anti-abuse providers
 - Create a new vector for cross-site tracking
 
-
 ### MOLE Dependency
 
 This approach builds on the
