@@ -1,0 +1,26 @@
+name: Lint markdown
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+      - name: Install markdownlint-cli
+        run: npm install -g markdownlint-cli
+      - name: Lint explainer
+        run: markdownlint explainer.md
+      - name: Install doctoc
+        run: npm install -g doctoc
+      - name: Check explainer table of contents
+        run: doctoc --dryrun explainer.md
