@@ -121,9 +121,9 @@ MoLE is to make its way into user agents.
 
 ## How does this work?
 
-The benefit of Moderated Endorsements is that it allows us to share information across
-sites. To explore it fully, we therefore have to imagine a few sites willing to work
-together.
+The benefit of Moderated Endorsements is that it allows us to share information
+across sites. To explore it fully, we therefore have to imagine a few sites
+willing to work together.
 
 - Site F, where a user is visiting for the first time and wants to take some
     more expensive action, like posting a comment or searching a database
